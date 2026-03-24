@@ -13,239 +13,134 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <style>
 
 body{
-
 margin:0;
 font-family:system-ui;
-
-background:linear-gradient(
-135deg,
-#0f172a,
-#020617
-);
-
+background:#0d1117;
 color:white;
-
 }
 
 /* navbar */
 
 .navbar{
-
 display:flex;
 justify-content:space-between;
 align-items:center;
-
 padding:15px 30px;
-
 background:#020617;
-
 border-bottom:1px solid #1e293b;
-
 }
 
 .logo{
-
 font-size:20px;
 font-weight:bold;
-
 display:flex;
 align-items:center;
 gap:8px;
-
 }
 
 .right{
-
 display:flex;
 gap:10px;
-
+align-items:center;
+flex-wrap:wrap;
 }
 
 /* layout */
 
 .container{
-
 display:flex;
 gap:20px;
-
 padding:20px;
-
 }
 
 /* sidebar */
 
 .sidebar{
-
 width:200px;
-
 background:#020617;
-
 padding:15px;
-
 border-radius:12px;
-
 border:1px solid #1e293b;
-
-}
-
-.sidebar h3{
-
-margin-top:0;
-
 }
 
 /* editor */
 
 .editor-box{
-
 flex:1;
-
 background:#020617;
-
 border-radius:12px;
-
 padding:10px;
-
 border:1px solid #1e293b;
-
 }
 
 #editor{
-
-height:500px;
-
+height:520px;
 border-radius:8px;
-
 }
 
-/* AI box */
+/* AI */
 
 .ai-box{
-
 width:320px;
-
 background:#020617;
-
 border-radius:12px;
-
 padding:15px;
-
 border:1px solid #1e293b;
-
 }
 
 /* buttons */
 
 button{
-
 border:none;
-
 padding:8px 14px;
-
 border-radius:8px;
-
 cursor:pointer;
-
 color:white;
-
 display:flex;
 align-items:center;
 gap:6px;
-
-font-size:14px;
-
 }
 
-.green{
+.green{ background:#22c55e; }
+.blue{ background:#3b82f6; }
+.red{ background:#ef4444; }
 
-background:#22c55e;
-
-}
-
-.blue{
-
-background:#3b82f6;
-
-}
-
-.gray{
-
-background:#334155;
-
-}
-
-.red{
-
-background:#ef4444;
-
-}
-
-button:hover{
-
-opacity:0.85;
-
-}
-
-/* code output */
-
-pre{
-
-white-space:pre-wrap;
-
+select{
+padding:6px;
+border-radius:6px;
 background:#020617;
-
-padding:10px;
-
-border-radius:8px;
-
+color:white;
+border:1px solid #1e293b;
 }
 
-.output{
-
-margin-top:15px;
-
-}
+/* files */
 
 .file{
-
 padding:6px;
-
-border-radius:6px;
-
 cursor:pointer;
-
+border-radius:6px;
 }
 
 .file:hover{
-
 background:#1e293b;
-
 }
 
-/* top controls */
+/* output */
 
-.controls{
-
-display:flex;
-
-gap:10px;
-
-margin-bottom:10px;
-
+pre{
+background:#020617;
+padding:10px;
+border-radius:8px;
+white-space:pre-wrap;
 }
 
-select{
-
-padding:6px;
-
-border-radius:6px;
-
+.output{
+margin-top:15px;
 }
 
 </style>
 
 </head>
-
 
 <body>
 
@@ -255,7 +150,6 @@ border-radius:6px;
 <div class="logo">
 
 <i class="fa-solid fa-code"></i>
-
 AI Code Editor
 
 </div>
@@ -264,70 +158,69 @@ AI Code Editor
 <div class="right">
 
 
-<select id="language">
+<select id="language" onchange="changeLanguage()">
 
 <option value="python">Python</option>
-
 <option value="javascript">JavaScript</option>
-
+<option value="typescript">TypeScript</option>
 <option value="php">PHP</option>
-
 <option value="java">Java</option>
+<option value="c">C</option>
+<option value="cpp">C++</option>
+<option value="csharp">C#</option>
+<option value="go">Go</option>
+<option value="rust">Rust</option>
+<option value="html">HTML</option>
+<option value="css">CSS</option>
+<option value="json">JSON</option>
+<option value="sql">SQL</option>
+<option value="markdown">Markdown</option>
+<option value="shell">Shell</option>
+<option value="xml">XML</option>
 
 </select>
 
 
-<button
-class="green"
-onclick="askAI()">
+<button class="green" onclick="askAI()">
 
 <i class="fa-solid fa-robot"></i>
-
 Suggest
 
 </button>
 
 
-<button
-class="green"
-onclick="applyFix()">
+<button class="green" onclick="applyFix()">
 
 <i class="fa-solid fa-wrench"></i>
-
 Apply
 
 </button>
 
 
-<button
-class="blue"
-onclick="runCode()">
+<button class="blue" onclick="runCode()">
 
 <i class="fa-solid fa-play"></i>
-
 Run
 
 </button>
 
 
-<button
-class="gray"
-onclick="toggleTheme()">
+<select id="themeSelect" onchange="changeTheme()">
 
-<i class="fa-solid fa-moon"></i>
+<option value="vs-dark">VS Dark</option>
+<option value="vs">Light</option>
+<option value="dracula">Dracula</option>
+<option value="monokai">Monokai</option>
+<option value="github">GitHub Dark</option>
 
-Theme
-
-</button>
+</select>
 
 
 <a href="/history">
 
-<button
-class="green">
+<button class="green">
 
 <i class="fa-solid fa-clock"></i>
-
 History
 
 </button>
@@ -339,11 +232,9 @@ History
 
 @csrf
 
-<button
-class="red">
+<button class="red">
 
 <i class="fa-solid fa-right-from-bracket"></i>
-
 Logout
 
 </button>
@@ -352,7 +243,6 @@ Logout
 
 
 </div>
-
 
 </div>
 
@@ -366,25 +256,19 @@ Logout
 <h3>
 
 <i class="fa-solid fa-folder"></i>
-
 Files
 
 </h3>
 
-
 <div id="files"></div>
 
 
-<button
-class="green"
-onclick="newFile()">
+<button class="green" onclick="newFile()">
 
 <i class="fa-solid fa-plus"></i>
-
 New File
 
 </button>
-
 
 </div>
 
@@ -392,14 +276,7 @@ New File
 
 <div class="editor-box">
 
-
-<div class="controls">
-
-</div>
-
-
 <div id="editor"></div>
-
 
 </div>
 
@@ -407,38 +284,26 @@ New File
 
 <div class="ai-box">
 
-
 <h3>
 
 <i class="fa-solid fa-brain"></i>
-
 AI Response
 
 </h3>
 
-
-<pre id="result">
-
-AI response here...
-
-</pre>
-
+<pre id="result"></pre>
 
 
 <div class="output">
 
-
 <h3>
 
 <i class="fa-solid fa-terminal"></i>
-
 Output
 
 </h3>
 
-
 <pre id="output"></pre>
-
 
 </div>
 
@@ -474,8 +339,8 @@ for(let name in files){
 
 html+=`
 
-<div
-class="file"
+<div class="file"
+
 onclick="openFile('${name}')">
 
 <i class="fa-solid fa-file"></i>
@@ -504,7 +369,7 @@ editor.setValue(files[name]);
 
 function newFile(){
 
-let name=prompt("File name");
+let name=prompt("file name");
 
 if(name){
 
@@ -517,7 +382,7 @@ renderFiles();
 }
 
 
-/* editor */
+/* monaco */
 
 require.config({
 
@@ -527,6 +392,45 @@ paths:{vs:'https://unpkg.com/monaco-editor@latest/min/vs'}
 
 
 require(['vs/editor/editor.main'],function(){
+
+
+/* themes */
+
+monaco.editor.defineTheme('dracula',{
+
+base:'vs-dark',
+inherit:true,
+
+colors:{
+'editor.background':'#282a36'
+}
+
+});
+
+
+monaco.editor.defineTheme('monokai',{
+
+base:'vs-dark',
+inherit:true,
+
+colors:{
+'editor.background':'#272822'
+}
+
+});
+
+
+monaco.editor.defineTheme('github',{
+
+base:'vs-dark',
+inherit:true,
+
+colors:{
+'editor.background':'#0d1117'
+}
+
+});
+
 
 window.editor=monaco.editor.create(
 
@@ -546,38 +450,63 @@ automaticLayout:true
 
 );
 
+
+/* load saved theme */
+
+let savedTheme=
+
+localStorage.getItem("theme");
+
+if(savedTheme){
+
+monaco.editor.setTheme(savedTheme);
+
+document.getElementById("themeSelect").value=savedTheme;
+
+}
+
 });
 
 
-/* theme */
+/* change language */
 
-function toggleTheme(){
+function changeLanguage(){
 
-if(document.body.style.background.includes("f1")){
+let lang=
 
-location.reload();
+document.getElementById("language").value;
+
+monaco.editor.setModelLanguage(
+
+editor.getModel(),
+
+lang
+
+);
 
 }
-else{
 
-document.body.style.background="#f1f5f9";
 
-monaco.editor.setTheme("vs");
+/* change theme */
+
+function changeTheme(){
+
+let theme=
+
+document.getElementById("themeSelect").value;
+
+monaco.editor.setTheme(theme);
+
+localStorage.setItem("theme",theme);
 
 }
 
-}
 
-
-/* ai */
+/* AI */
 
 async function askAI(){
 
-let res=await fetch(
-
-'/suggest',
-
-{
+let res=await fetch('/suggest',{
 
 method:'POST',
 
@@ -586,7 +515,6 @@ headers:{
 'Content-Type':'application/json',
 
 'X-CSRF-TOKEN':
-
 document.querySelector('meta[name="csrf-token"]').content
 
 },
@@ -596,23 +524,20 @@ body:JSON.stringify({
 code:editor.getValue(),
 
 language:
-
 document.getElementById("language").value
 
 })
 
-}
-
-);
+});
 
 let data=await res.json();
 
-document.getElementById("result").innerText=
-
-data.result;
+document.getElementById("result").innerText=data.result;
 
 }
 
+
+/* apply */
 
 function applyFix(){
 
@@ -629,11 +554,7 @@ document.getElementById("result").innerText
 
 async function runCode(){
 
-let res=await fetch(
-
-'/run',
-
-{
+let res=await fetch('/run',{
 
 method:'POST',
 
@@ -642,7 +563,6 @@ headers:{
 'Content-Type':'application/json',
 
 'X-CSRF-TOKEN':
-
 document.querySelector('meta[name="csrf-token"]').content
 
 },
@@ -652,14 +572,11 @@ body:JSON.stringify({
 code:editor.getValue(),
 
 language:
-
 document.getElementById("language").value
 
 })
 
-}
-
-);
+});
 
 let data=await res.json();
 
