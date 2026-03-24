@@ -1,31 +1,114 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AiController;
 use App\Models\SavedCode;
 
+
+/*
+|--------------------------------------------------------------------------
+| Landing Page
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
-    return redirect('/editor');
+
+    return view('welcome');
+
 });
 
 
-Route::get('/editor', function () {
+/*
+|--------------------------------------------------------------------------
+| Register
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/register', [
+
+    RegisteredUserController::class, 'create'
+
+])->name('register');
+
+
+Route::post('/register', [
+
+    RegisteredUserController::class, 'store'
+
+]);
+
+
+/*
+|--------------------------------------------------------------------------
+| Login
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/login', [
+
+    AuthenticatedSessionController::class, 'create'
+
+])->name('login');
+
+
+Route::post('/login', [
+
+    AuthenticatedSessionController::class, 'store'
+
+]);
+
+
+/*
+|--------------------------------------------------------------------------
+| Logout
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/logout', [
+
+    AuthenticatedSessionController::class, 'destroy'
+
+])->middleware('auth');
+
+
+/*
+|--------------------------------------------------------------------------
+| Editor
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/editor', function(){
 
     return view('editor');
 
 })->middleware('auth');
 
 
-Route::post('/suggest',
+/*
+|--------------------------------------------------------------------------
+| AI Suggest
+|--------------------------------------------------------------------------
+*/
 
-[AiController::class,'suggest']
+Route::post('/suggest', [
 
-)->middleware('auth');
+    AiController::class, 'suggest'
 
+])->middleware('auth');
+
+
+/*
+|--------------------------------------------------------------------------
+| Run Code
+|--------------------------------------------------------------------------
+*/
 
 Route::post('/run', function(){
 
     $code = request('code');
+
     $language = request('language');
 
     try{
@@ -41,14 +124,13 @@ Route::post('/run', function(){
         }
         else{
 
-            $output =
-            "Run currently supported for PHP only";
+            $output = "Run currently supported for PHP only";
 
         }
 
         return response()->json([
 
-            'output'=>$output
+            'output' => $output
 
         ]);
 
@@ -57,7 +139,7 @@ Route::post('/run', function(){
 
         return response()->json([
 
-            'error'=>$e->getMessage()
+            'error' => $e->getMessage()
 
         ]);
 
@@ -66,10 +148,15 @@ Route::post('/run', function(){
 })->middleware('auth');
 
 
+/*
+|--------------------------------------------------------------------------
+| History
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/history', function(){
 
-    $codes =
-    SavedCode::where(
+    $codes = SavedCode::where(
 
         'user_id',
         auth()->id()
@@ -87,4 +174,14 @@ Route::get('/history', function(){
 })->middleware('auth');
 
 
-require __DIR__.'/auth.php';
+/*
+|--------------------------------------------------------------------------
+| Redirect after login
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/dashboard', function(){
+
+    return redirect('/editor');
+
+})->middleware('auth');

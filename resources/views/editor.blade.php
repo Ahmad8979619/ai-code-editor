@@ -13,93 +13,233 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <style>
 
 body{
-font-family:Arial;
-margin:30px;
-background:#0f172a;
+
+margin:0;
+font-family:system-ui;
+
+background:linear-gradient(
+135deg,
+#0f172a,
+#020617
+);
+
 color:white;
-transition:0.3s;
+
 }
 
-body.light{
-background:#f1f5f9;
-color:black;
+/* navbar */
+
+.navbar{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+padding:15px 30px;
+
+background:#020617;
+
+border-bottom:1px solid #1e293b;
+
 }
 
-.top-bar{
+.logo{
+
+font-size:20px;
+font-weight:bold;
+
+display:flex;
+align-items:center;
+gap:8px;
+
+}
+
+.right{
+
 display:flex;
 gap:10px;
-margin-bottom:20px;
-flex-wrap:wrap;
+
 }
+
+/* layout */
 
 .container{
+
 display:flex;
 gap:20px;
+
+padding:20px;
+
 }
+
+/* sidebar */
 
 .sidebar{
+
 width:200px;
+
 background:#020617;
+
 padding:15px;
-border-radius:10px;
+
+border-radius:12px;
+
+border:1px solid #1e293b;
+
 }
 
-body.light .sidebar{
-background:white;
-border:1px solid #ddd;
+.sidebar h3{
+
+margin-top:0;
+
 }
+
+/* editor */
 
 .editor-box{
-width:55%;
-}
 
-.ai-box{
-width:30%;
+flex:1;
+
 background:#020617;
-padding:15px;
-border-radius:10px;
-}
 
-body.light .ai-box{
-background:white;
-border:1px solid #ddd;
+border-radius:12px;
+
+padding:10px;
+
+border:1px solid #1e293b;
+
 }
 
 #editor{
-height:400px;
-border-radius:10px;
-border:1px solid #1e293b;
+
+height:500px;
+
+border-radius:8px;
+
 }
+
+/* AI box */
+
+.ai-box{
+
+width:320px;
+
+background:#020617;
+
+border-radius:12px;
+
+padding:15px;
+
+border:1px solid #1e293b;
+
+}
+
+/* buttons */
 
 button{
-padding:8px 12px;
-background:#22c55e;
+
 border:none;
-color:white;
+
+padding:8px 14px;
+
+border-radius:8px;
+
 cursor:pointer;
-border-radius:6px;
+
+color:white;
+
 display:flex;
 align-items:center;
-gap:5px;
+gap:6px;
+
+font-size:14px;
+
 }
 
-.toggle{
+.green{
+
+background:#22c55e;
+
+}
+
+.blue{
+
 background:#3b82f6;
+
+}
+
+.gray{
+
+background:#334155;
+
+}
+
+.red{
+
+background:#ef4444;
+
+}
+
+button:hover{
+
+opacity:0.85;
+
+}
+
+/* code output */
+
+pre{
+
+white-space:pre-wrap;
+
+background:#020617;
+
+padding:10px;
+
+border-radius:8px;
+
 }
 
 .output{
-margin-top:20px;
-padding:10px;
-background:#020617;
-border-radius:10px;
+
+margin-top:15px;
+
 }
 
-.error{
-color:red;
+.file{
+
+padding:6px;
+
+border-radius:6px;
+
+cursor:pointer;
+
 }
 
-.success{
-color:#22c55e;
+.file:hover{
+
+background:#1e293b;
+
+}
+
+/* top controls */
+
+.controls{
+
+display:flex;
+
+gap:10px;
+
+margin-bottom:10px;
+
+}
+
+select{
+
+padding:6px;
+
+border-radius:6px;
+
 }
 
 </style>
@@ -109,16 +249,20 @@ color:#22c55e;
 
 <body>
 
-<h2>
+
+<div class="navbar">
+
+<div class="logo">
 
 <i class="fa-solid fa-code"></i>
 
 AI Code Editor
 
-</h2>
+</div>
 
 
-<div class="top-bar">
+<div class="right">
+
 
 <select id="language">
 
@@ -133,7 +277,9 @@ AI Code Editor
 </select>
 
 
-<button onclick="askAI()">
+<button
+class="green"
+onclick="askAI()">
 
 <i class="fa-solid fa-robot"></i>
 
@@ -142,7 +288,9 @@ Suggest
 </button>
 
 
-<button onclick="applyFix()">
+<button
+class="green"
+onclick="applyFix()">
 
 <i class="fa-solid fa-wrench"></i>
 
@@ -151,7 +299,9 @@ Apply
 </button>
 
 
-<button onclick="runCode()">
+<button
+class="blue"
+onclick="runCode()">
 
 <i class="fa-solid fa-play"></i>
 
@@ -160,7 +310,8 @@ Run
 </button>
 
 
-<button class="toggle"
+<button
+class="gray"
 onclick="toggleTheme()">
 
 <i class="fa-solid fa-moon"></i>
@@ -172,7 +323,8 @@ Theme
 
 <a href="/history">
 
-<button>
+<button
+class="green">
 
 <i class="fa-solid fa-clock"></i>
 
@@ -182,7 +334,28 @@ History
 
 </a>
 
+
+<form method="POST" action="/logout">
+
+@csrf
+
+<button
+class="red">
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+Logout
+
+</button>
+
+</form>
+
+
 </div>
+
+
+</div>
+
 
 
 <div class="container">
@@ -198,9 +371,13 @@ Files
 
 </h3>
 
+
 <div id="files"></div>
 
-<button onclick="newFile()">
+
+<button
+class="green"
+onclick="newFile()">
 
 <i class="fa-solid fa-plus"></i>
 
@@ -208,13 +385,21 @@ New File
 
 </button>
 
+
 </div>
 
 
 
 <div class="editor-box">
 
+
+<div class="controls">
+
+</div>
+
+
 <div id="editor"></div>
+
 
 </div>
 
@@ -222,23 +407,55 @@ New File
 
 <div class="ai-box">
 
-<pre id="result"></pre>
+
+<h3>
+
+<i class="fa-solid fa-brain"></i>
+
+AI Response
+
+</h3>
+
+
+<pre id="result">
+
+AI response here...
+
+</pre>
+
+
 
 <div class="output">
 
+
+<h3>
+
+<i class="fa-solid fa-terminal"></i>
+
+Output
+
+</h3>
+
+
 <pre id="output"></pre>
 
-</div>
 
 </div>
 
 
 </div>
+
+
+</div>
+
 
 
 <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
 
+
 <script>
+
+/* files */
 
 let files={
 
@@ -248,19 +465,26 @@ let files={
 
 let currentFile="main.py";
 
+
 function renderFiles(){
 
 let html="";
 
 for(let name in files){
 
-html+=`<div onclick="openFile('${name}')">
+html+=`
+
+<div
+class="file"
+onclick="openFile('${name}')">
 
 <i class="fa-solid fa-file"></i>
 
 ${name}
 
-</div>`;
+</div>
+
+`;
 
 }
 
@@ -280,7 +504,7 @@ editor.setValue(files[name]);
 
 function newFile(){
 
-let name=prompt("file name");
+let name=prompt("File name");
 
 if(name){
 
@@ -292,6 +516,8 @@ renderFiles();
 
 }
 
+
+/* editor */
 
 require.config({
 
@@ -312,7 +538,9 @@ value:files[currentFile],
 
 language:'python',
 
-theme:'vs-dark'
+theme:'vs-dark',
+
+automaticLayout:true
 
 }
 
@@ -321,22 +549,27 @@ theme:'vs-dark'
 });
 
 
+/* theme */
+
 function toggleTheme(){
 
-document.body.classList.toggle("light");
+if(document.body.style.background.includes("f1")){
 
-if(document.body.classList.contains("light")){
+location.reload();
+
+}
+else{
+
+document.body.style.background="#f1f5f9";
 
 monaco.editor.setTheme("vs");
 
-}else{
-
-monaco.editor.setTheme("vs-dark");
-
 }
 
 }
 
+
+/* ai */
 
 async function askAI(){
 
@@ -391,6 +624,8 @@ document.getElementById("result").innerText
 
 }
 
+
+/* run */
 
 async function runCode(){
 
