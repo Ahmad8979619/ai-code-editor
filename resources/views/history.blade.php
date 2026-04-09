@@ -1,78 +1,53 @@
-<!DOCTYPE html>
+@extends('layouts.app')
 
-<html>
+@section('title','History')
 
-<head>
+@section('content')
 
-<title>History</title>
+<h2>
 
-<style>
+<i class="fa-solid fa-clock-rotate-left"></i>
 
-body{
+Code History
 
-background:#0f172a;
+</h2>
 
-color:white;
 
-font-family:Arial;
+@if($codes->count()==0)
 
-padding:40px;
+<div class="card" style="text-align:center;opacity:0.7">
 
-}
+<h2>No saved code yet</h2>
 
-.card{
+<p>Start using AI editor to generate code</p>
 
-background:#020617;
+</div>
 
-padding:20px;
+@endif
 
-margin-bottom:20px;
 
-border-radius:10px;
-
-}
-
-button{
-
-padding:8px;
-
-background:#22c55e;
-
-border:none;
-
-color:white;
-
-cursor:pointer;
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h2>Saved Codes</h2>
-
-<a href="/editor">
-
-<button>Back to Editor</button>
-
-</a>
-
-<br><br>
 
 @foreach($codes as $code)
 
 <div class="card">
 
-<p>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
 
-Language:
+<div class="badge">
 
-{{ $code->language }}
+{{ strtoupper($code->language) }}
 
-</p>
+</div>
+
+
+<small style="opacity:0.6">
+
+{{ $code->created_at->diffForHumans() }}
+
+</small>
+
+</div>
+
 
 <pre>
 
@@ -80,34 +55,176 @@ Language:
 
 </pre>
 
+
+<div style="display:flex;gap:10px;margin-top:12px">
+
+
 <button
-onclick="copyCode(
+class="btn copy-btn"
+onclick="copyCode(this,`{{ $code->code }}`)">
 
-`{{ $code->code }}`
-
-)">
+<i class="fa-solid fa-copy"></i>
 
 Copy
 
 </button>
+
+
+
+<form
+method="POST"
+action="/delete-code/{{ $code->id }}">
+
+@csrf
+
+@method('DELETE')
+
+<button
+class="btn delete-btn">
+
+<i class="fa-solid fa-trash"></i>
+
+Delete
+
+</button>
+
+</form>
+
+
+</div>
+
 
 </div>
 
 @endforeach
 
 
+
+<style>
+
+/* language badge */
+
+.badge{
+
+padding:5px 12px;
+
+border-radius:20px;
+
+font-size:12px;
+
+font-weight:600;
+
+background:
+
+linear-gradient(135deg,#22c55e,#16a34a);
+
+box-shadow:
+
+0 0 12px rgba(34,197,94,0.35);
+
+}
+
+
+/* code block */
+
+pre{
+
+background:#020617;
+
+padding:18px;
+
+border-radius:12px;
+
+overflow:auto;
+
+font-size:13px;
+
+border:1px solid var(--border);
+
+box-shadow:
+
+0 0 25px rgba(0,0,0,0.6) inset;
+
+}
+
+
+/* buttons */
+
+.copy-btn{
+
+background:
+
+linear-gradient(135deg,#3b82f6,#2563eb);
+
+}
+
+.copy-btn:hover{
+
+box-shadow:
+
+0 0 25px rgba(59,130,246,0.5);
+
+}
+
+
+.delete-btn{
+
+background:
+
+linear-gradient(135deg,#ef4444,#dc2626);
+
+}
+
+.delete-btn:hover{
+
+box-shadow:
+
+0 0 25px rgba(239,68,68,0.5);
+
+}
+
+
+/* copy feedback animation */
+
+.copy-success{
+
+background:
+
+linear-gradient(135deg,#22c55e,#16a34a) !important;
+
+box-shadow:
+
+0 0 25px rgba(34,197,94,0.5);
+
+}
+
+</style>
+
+
+
 <script>
 
-function copyCode(code){
+function copyCode(btn,code){
 
 navigator.clipboard.writeText(code);
 
-alert("Copied!");
+
+btn.classList.add("copy-success");
+
+btn.innerHTML="✓ Copied";
+
+
+setTimeout(()=>{
+
+btn.classList.remove("copy-success");
+
+btn.innerHTML='<i class="fa-solid fa-copy"></i> Copy';
+
+},1500);
 
 }
 
 </script>
 
-</body>
 
-</html>
+@endsection

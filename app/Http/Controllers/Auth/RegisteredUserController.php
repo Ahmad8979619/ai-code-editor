@@ -11,36 +11,44 @@ use Illuminate\Support\Facades\Hash;
 class RegisteredUserController extends Controller
 {
 
-public function create()
-{
-    return view('auth.register');
-}
+    public function create()
+    {
+
+        return view('auth.register');
+
+    }
 
 
-public function store(Request $request)
-{
+    public function store(Request $request)
+    {
 
-$request->validate([
+        $request->validate([
 
-'name'=>'required',
-'email'=>'required|email|unique:users',
-'password'=>'required|min:6'
+            'name'=>'required',
 
-]);
+            'email'=>'required|email|unique:users',
 
-$user = User::create([
+            'password'=>'required|min:6'
 
-'name'=>$request->name,
-'email'=>$request->email,
+        ]);
 
-'password'=>Hash::make($request->password)
 
-]);
+        $user = User::create([
 
-Auth::login($user);
+            'name'=>$request->name,
 
-return redirect('/editor');
+            'email'=>$request->email,
 
-}
+            'password'=>Hash::make($request->password)
+
+        ]);
+
+
+        Auth::login($user);
+
+
+        return redirect('/dashboard');
+
+    }
 
 }

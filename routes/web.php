@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
+
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AiController;
@@ -26,16 +29,18 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/register', [
+Route::get('/register',[
 
-    RegisteredUserController::class, 'create'
+RegisteredUserController::class,
+'create'
 
 ])->name('register');
 
 
-Route::post('/register', [
+Route::post('/register',[
 
-    RegisteredUserController::class, 'store'
+RegisteredUserController::class,
+'store'
 
 ]);
 
@@ -46,16 +51,18 @@ Route::post('/register', [
 |--------------------------------------------------------------------------
 */
 
-Route::get('/login', [
+Route::get('/login',[
 
-    AuthenticatedSessionController::class, 'create'
+AuthenticatedSessionController::class,
+'create'
 
 ])->name('login');
 
 
-Route::post('/login', [
+Route::post('/login',[
 
-    AuthenticatedSessionController::class, 'store'
+AuthenticatedSessionController::class,
+'store'
 
 ]);
 
@@ -66,11 +73,44 @@ Route::post('/login', [
 |--------------------------------------------------------------------------
 */
 
-Route::post('/logout', [
+Route::post('/logout',[
 
-    AuthenticatedSessionController::class, 'destroy'
+AuthenticatedSessionController::class,
+'destroy'
 
-])->middleware('auth');
+])->middleware('auth')->name('logout');
+
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/dashboard',function(){
+
+$user = auth()->user();
+
+$totalFiles = SavedCode::where(
+'user_id',
+$user->id
+)->count();
+
+$lastCode = SavedCode::where(
+'user_id',
+$user->id
+)->latest()->first();
+
+return view(
+'dashboard',
+compact(
+'user',
+'totalFiles',
+'lastCode'
+)
+);
+
+})->middleware('auth')->name('dashboard');
 
 
 /*
@@ -79,73 +119,145 @@ Route::post('/logout', [
 |--------------------------------------------------------------------------
 */
 
-Route::get('/editor', function(){
+Route::get('/editor',function(){
 
-    return view('editor');
+return view('editor');
 
-})->middleware('auth');
-
-
-/*
-|--------------------------------------------------------------------------
-| AI Suggest
-|--------------------------------------------------------------------------
-*/
-
-Route::post('/suggest', [
-
-    AiController::class, 'suggest'
-
-])->middleware('auth');
+})->middleware('auth')->name('editor');
 
 
 /*
 |--------------------------------------------------------------------------
-| Run Code
+| AI Suggest (fix code)
 |--------------------------------------------------------------------------
 */
 
-Route::post('/run', function(){
+Route::post('/suggest',
 
-    $code = request('code');
+[AiController::class,'suggest']
 
-    $language = request('language');
+)->middleware('auth')->name('suggest');
 
-    try{
 
-        if($language == "php"){
+/*
+|--------------------------------------------------------------------------
+| AI Format Code
+|--------------------------------------------------------------------------
+*/
 
-            ob_start();
+Route::post('/format',
 
-            eval($code);
+[AiController::class,'format']
 
-            $output = ob_get_clean();
+)->middleware('auth')->name('format');
 
-        }
-        else{
 
-            $output = "Run currently supported for PHP only";
+/*
+|--------------------------------------------------------------------------
+| AI Autocomplete
+|--------------------------------------------------------------------------
+*/
 
-        }
+Route::post('/autocomplete',
 
-        return response()->json([
+[AiController::class,'autocomplete']
 
-            'output' => $output
+)->middleware('auth')->name('autocomplete');
 
-        ]);
 
-    }
-    catch(\Throwable $e){
+/*
+|--------------------------------------------------------------------------
+| Run Code (Judge0 API)
+|--------------------------------------------------------------------------
+*/
 
-        return response()->json([
+Route::post('/run',function(Request $request){
 
-            'error' => $e->getMessage()
+$code = $request->code;
 
-        ]);
+$lang = strtolower($request->language);
 
-    }
 
-})->middleware('auth');
+/*
+Judge0 language IDs
+*/
+
+$languages = [
+
+'python'=>71,
+
+'javascript'=>63,
+'typescript'=>63,
+
+'php'=>68,
+
+'java'=>62,
+
+'cpp'=>54,
+'c++'=>54,
+
+'c'=>50,
+
+'csharp'=>51,
+'c#'=>51,
+
+'go'=>60,
+
+'rust'=>73,
+
+'html'=>43,
+'css'=>43,
+'json'=>43
+
+];
+
+
+/*
+default language python
+*/
+
+$language_id =
+
+$languages[$lang] ?? 71;
+
+
+/*
+send to judge0
+*/
+
+$response = Http::post(
+
+'https://ce.judge0.com/submissions?base64_encoded=false&wait=true',
+
+[
+
+'source_code'=>$code,
+
+'language_id'=>$language_id
+
+]
+
+);
+
+
+$data = $response->json();
+
+
+$output =
+
+$data['stdout']
+?? $data['stderr']
+?? $data['compile_output']
+?? 'No output';
+
+
+return response()->json([
+
+'output'=>$output
+
+]);
+
+})->middleware('auth')->name('run');
 
 
 /*
@@ -154,34 +266,48 @@ Route::post('/run', function(){
 |--------------------------------------------------------------------------
 */
 
-Route::get('/history', function(){
+Route::get('/history',function(){
 
-    $codes = SavedCode::where(
+$codes = SavedCode::where(
 
-        'user_id',
-        auth()->id()
+'user_id',
 
-    )->latest()->get();
+auth()->id()
 
-    return view(
+)->latest()->get();
 
-        'history',
 
-        compact('codes')
+return view(
 
-    );
+'history',
 
-})->middleware('auth');
+compact('codes')
+
+);
+
+})->middleware('auth')->name('history');
 
 
 /*
 |--------------------------------------------------------------------------
-| Redirect after login
+| Delete Code
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', function(){
+Route::delete('/delete-code/{id}',function($id){
 
-    return redirect('/editor');
+SavedCode::where(
 
-})->middleware('auth');
+'id',$id
+
+)->where(
+
+'user_id',
+
+auth()->id()
+
+)->delete();
+
+return back();
+
+})->middleware('auth')->name('delete.code');
