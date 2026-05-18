@@ -171,91 +171,67 @@ Route::post('/autocomplete',
 |--------------------------------------------------------------------------
 */
 
-Route::post('/run',function(Request $request){
+Route::post('/run', function (Request $request) {
 
-$code = $request->code;
+    $code  = $request->code;
+    $lang  = strtolower($request->language);
+    $input = $request->input('input', ''); // stdin from the terminal
 
-$lang = strtolower($request->language);
+    /*
+    Judge0 language IDs
+    */
 
+    $languages = [
+        'python'     => 71,
+        'javascript' => 63,
+        'typescript' => 63,
+        'php'        => 68,
+        'java'       => 62,
+        'cpp'        => 54,
+        'c++'        => 54,
+        'c'          => 50,
+        'csharp'     => 51,
+        'c#'         => 51,
+        'go'         => 60,
+        'rust'       => 73,
+        'html'       => 43,
+        'css'        => 43,
+        'json'       => 43,
+    ];
 
-/*
-Judge0 language IDs
-*/
+    /*
+    default language python
+    */
 
-$languages = [
+    $language_id = $languages[$lang] ?? 71;
 
-'python'=>71,
+    /*
+    send to judge0 — include stdin so input() calls work
+    */
 
-'javascript'=>63,
-'typescript'=>63,
+    $response = Http::post(
 
-'php'=>68,
+        'https://ce.judge0.com/submissions?base64_encoded=false&wait=true',
 
-'java'=>62,
+        [
+            'source_code' => $code,
+            'language_id' => $language_id,
+            'stdin'       => $input,   // <-- passes your typed input to the program
+        ]
 
-'cpp'=>54,
-'c++'=>54,
+    );
 
-'c'=>50,
+    $data = $response->json();
 
-'csharp'=>51,
-'c#'=>51,
+    $output =
+        $data['stdout']
+        ?? $data['stderr']
+        ?? $data['compile_output']
+        ?? 'No output';
 
-'go'=>60,
-
-'rust'=>73,
-
-'html'=>43,
-'css'=>43,
-'json'=>43
-
-];
-
-
-/*
-default language python
-*/
-
-$language_id =
-
-$languages[$lang] ?? 71;
-
-
-/*
-send to judge0
-*/
-
-$response = Http::post(
-
-'https://ce.judge0.com/submissions?base64_encoded=false&wait=true',
-
-[
-
-'source_code'=>$code,
-
-'language_id'=>$language_id
-
-]
-
-);
-
-
-$data = $response->json();
-
-
-$output =
-
-$data['stdout']
-?? $data['stderr']
-?? $data['compile_output']
-?? 'No output';
-
-
-return response()->json([
-
-'output'=>$output
-
-]);
+    return response()->json([
+        'output' => $output
+    ]);
 
 })->middleware('auth')->name('run');
 
@@ -266,24 +242,23 @@ return response()->json([
 |--------------------------------------------------------------------------
 */
 
-Route::get('/history',function(){
+Route::get('/history', function () {
 
-$codes = SavedCode::where(
+    $codes = SavedCode::where(
 
-'user_id',
+        'user_id',
 
-auth()->id()
+        auth()->id()
 
-)->latest()->get();
+    )->latest()->get();
 
+    return view(
 
-return view(
+        'history',
 
-'history',
+        compact('codes')
 
-compact('codes')
-
-);
+    );
 
 })->middleware('auth')->name('history');
 
@@ -294,20 +269,20 @@ compact('codes')
 |--------------------------------------------------------------------------
 */
 
-Route::delete('/delete-code/{id}',function($id){
+Route::delete('/delete-code/{id}', function ($id) {
 
-SavedCode::where(
+    SavedCode::where(
 
-'id',$id
+        'id', $id
 
-)->where(
+    )->where(
 
-'user_id',
+        'user_id',
 
-auth()->id()
+        auth()->id()
 
-)->delete();
+    )->delete();
 
-return back();
+    return back();
 
 })->middleware('auth')->name('delete.code');

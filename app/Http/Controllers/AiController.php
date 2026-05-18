@@ -4,37 +4,41 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Models\SavedCode;
 use Illuminate\Support\Facades\Auth;
+use App\Models\SavedCode;
 
 class AiController extends Controller
 {
 
-/*
-FORMAT CODE
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT CODE
+    |--------------------------------------------------------------------------
+    */
 
-public function format(Request $request)
-{
+    public function format(Request $request)
+    {
 
-$code = $request->code;
+        try {
 
-$language = $request->language;
+            $code = $request->code;
 
+            $language = $request->language;
 
-$response = Http::withToken(env('OPENAI_API_KEY'))
+            $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->withToken(env('OPENAI_API_KEY'))
+                ->post(
 
-->post(
+                    'https://api.openai.com/v1/responses',
 
-'https://api.openai.com/v1/responses',
+                    [
 
-[
+                        "model" => "gpt-4.1-mini",
 
-"model"=>"gpt-4.1-mini",
+                        "input" =>
 
-"input"=>
-
-"Format this ".$language." code properly.
+                            "Format this ".$language." code properly.
 
 Return ONLY formatted code.
 Do NOT add explanation.
@@ -42,64 +46,79 @@ Do NOT add markdown.
 
 ".$code
 
-]
+                    ]
 
-);
+                );
 
+            if (!$response->successful()) {
 
-$data = $response->json();
+                return response()->json([
 
+                    'result' => 'OpenAI API Error'
 
-$result =
+                ], 500);
+            }
 
-$data['output'][0]['content'][0]['text']
-?? $code;
+            $data = $response->json();
 
+            $result =
 
-/* clean markdown */
+                $data['output'][0]['content'][0]['text']
+                ?? $code;
 
-$clean = preg_replace('/```[a-z]*\n?/i','',$result);
+            $clean = preg_replace('/```[a-z]*\n?/i', '', $result);
 
-$clean = str_replace('```','',$clean);
+            $clean = str_replace('```', '', $clean);
 
-$clean = trim($clean);
+            $clean = trim($clean);
 
+            return response()->json([
 
-return response()->json([
+                'result' => $clean
 
-'result'=>$clean
+            ]);
 
-]);
+        } catch (\Exception $e) {
 
-}
+            return response()->json([
 
+                'result' => 'ERROR: '.$e->getMessage()
 
-
-/*
-SUGGEST CODE
-*/
-
-public function suggest(Request $request)
-{
-
-$code = $request->code;
-
-$language = $request->language;
+            ], 500);
+        }
+    }
 
 
-$response = Http::withToken(env('OPENAI_API_KEY'))
 
-->post(
+    /*
+    |--------------------------------------------------------------------------
+    | SUGGEST CODE
+    |--------------------------------------------------------------------------
+    */
 
-'https://api.openai.com/v1/responses',
+    public function suggest(Request $request)
+    {
 
-[
+        try {
 
-"model"=>"gpt-4.1-mini",
+            $code = $request->code;
 
-"input"=>
+            $language = $request->language ?? 'code';
 
-"Fix and improve this ".$language." code.
+            $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->withToken(env('OPENAI_API_KEY'))
+                ->post(
+
+                    'https://api.openai.com/v1/responses',
+
+                    [
+
+                        "model" => "gpt-4.1-mini",
+
+                        "input" =>
+
+                            "Fix and improve this ".$language." code.
 
 Return ONLY raw code.
 Do NOT add explanation.
@@ -108,83 +127,92 @@ Do NOT add ```.
 
 ".$code
 
-]
+                    ]
 
-);
+                );
 
+            if (!$response->successful()) {
 
-$data = $response->json();
+                return response()->json([
 
+                    'result' => 'OpenAI API Error'
 
-$result =
+                ], 500);
+            }
 
-$data['output'][0]['content'][0]['text']
-?? $code;
+            $data = $response->json();
 
+            $result =
 
-/* clean markdown */
+                $data['output'][0]['content'][0]['text']
+                ?? $code;
 
-$clean = preg_replace('/```[a-z]*\n?/i','',$result);
+            $clean = preg_replace('/```[a-z]*\n?/i', '', $result);
 
-$clean = str_replace('```','',$clean);
+            $clean = str_replace('```', '', $clean);
 
-$clean = trim($clean);
+            $clean = trim($clean);
 
+            if (Auth::check()) {
 
-/* save */
+                SavedCode::create([
 
-if(Auth::check()){
+                    'user_id' => Auth::id(),
 
-SavedCode::create([
+                    'code' => $clean,
 
-'user_id'=>Auth::id(),
+                    'language' => $language
 
-'code'=>$clean,
+                ]);
+            }
 
-'language'=>$language
+            return response()->json([
 
-]);
+                'result' => $clean
 
-}
+            ]);
 
+        } catch (\Exception $e) {
 
-/* return */
+            return response()->json([
 
-return response()->json([
+                'result' => 'ERROR: '.$e->getMessage()
 
-'result'=>$clean
-
-]);
-
-}
-
-
-
-/*
-AI AUTOCOMPLETE
-*/
-
-public function autocomplete(Request $request)
-{
-
-$code = $request->code;
-
-$language = $request->language;
+            ], 500);
+        }
+    }
 
 
-$response = Http::withToken(env('OPENAI_API_KEY'))
 
-->post(
+    /*
+    |--------------------------------------------------------------------------
+    | AUTOCOMPLETE
+    |--------------------------------------------------------------------------
+    */
 
-'https://api.openai.com/v1/responses',
+    public function autocomplete(Request $request)
+    {
 
-[
+        try {
 
-"model"=>"gpt-4.1-mini",
+            $code = $request->code;
 
-"input"=>
+            $language = $request->language ?? 'code';
 
-"Continue this ".$language." code.
+            $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->withToken(env('OPENAI_API_KEY'))
+                ->post(
+
+                    'https://api.openai.com/v1/responses',
+
+                    [
+
+                        "model" => "gpt-4.1-mini",
+
+                        "input" =>
+
+                            "Continue this ".$language." code.
 
 Return ONLY the next few words of code.
 Do NOT add explanation.
@@ -193,36 +221,46 @@ Do NOT add ```.
 
 ".$code
 
-]
+                    ]
 
-);
+                );
 
+            if (!$response->successful()) {
 
-$data = $response->json();
+                return response()->json([
 
+                    'suggestion' => ''
 
-$text =
+                ]);
+            }
 
-$data['output'][0]['content'][0]['text']
-?? "";
+            $data = $response->json();
 
+            $text =
 
-/* clean */
+                $data['output'][0]['content'][0]['text']
+                ?? "";
 
-$clean = preg_replace('/```[a-z]*\n?/i','',$text);
+            $clean = preg_replace('/```[a-z]*\n?/i', '', $text);
 
-$clean = str_replace('```','',$clean);
+            $clean = str_replace('```', '', $clean);
 
-$clean = trim($clean);
+            $clean = trim($clean);
 
+            return response()->json([
 
-return response()->json([
+                'suggestion' => $clean
 
-'suggestion'=>$clean
+            ]);
 
-]);
+        } catch (\Exception $e) {
 
-}
+            return response()->json([
 
+                'suggestion' => ''
+
+            ]);
+        }
+    }
 
 }

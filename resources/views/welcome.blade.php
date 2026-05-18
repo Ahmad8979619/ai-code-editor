@@ -477,7 +477,6 @@
   <a href="/" class="logo">
     <div class="logo-icon"><i class="fa-solid fa-bolt"></i></div>
     AiEditor
-    <span class="logo-badge">BETA</span>
   </a>
 
   <div class="nav-right">
