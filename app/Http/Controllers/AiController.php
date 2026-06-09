@@ -159,7 +159,7 @@ Do NOT add ```.
 
                     'user_id' => Auth::id(),
 
-                    'code' => $clean,
+                    'code'     => $clean,
 
                     'language' => $language
 
@@ -260,6 +260,99 @@ Do NOT add ```.
                 'suggestion' => ''
 
             ]);
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    |    DELETE مع Authorization
+    | المستخدم يقدر يحذف كوداته فقط
+    |--------------------------------------------------------------------------
+    */
+
+    public function destroy(Request $request, $id)
+    {
+
+        $code = SavedCode::where('id', $id)
+                         ->where('user_id', Auth::id())
+                         ->firstOrFail();
+
+        $code->delete();
+
+        return redirect()->back()->with('success', 'Code deleted successfully');
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    |  EXPLAIN CODE
+    |--------------------------------------------------------------------------
+    */
+
+    public function explain(Request $request)
+    {
+
+        try {
+
+            $code = $request->code;
+
+            $language = $request->language ?? 'code';
+
+            $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->withToken(env('OPENAI_API_KEY'))
+                ->post(
+
+                    'https://api.openai.com/v1/responses',
+
+                    [
+
+                        "model" => "gpt-4.1-mini",
+
+                        "input" =>
+
+                            "Explain this ".$language." code in simple terms.
+
+Be concise and clear.
+Do NOT add markdown.
+
+".$code
+
+                    ]
+
+                );
+
+            if (!$response->successful()) {
+
+                return response()->json([
+
+                    'result' => 'OpenAI API Error'
+
+                ], 500);
+            }
+
+            $data = $response->json();
+
+            $result =
+
+                $data['output'][0]['content'][0]['text']
+                ?? 'Could not explain';
+
+            return response()->json([
+
+                'result' => trim($result)
+
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+
+                'result' => 'ERROR: '.$e->getMessage()
+
+            ], 500);
         }
     }
 
