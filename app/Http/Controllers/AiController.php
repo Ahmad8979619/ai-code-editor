@@ -356,4 +356,84 @@ Do NOT add markdown.
         }
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHAT
+    | محادثة مع الـ AI عن الكود الحالي
+    |--------------------------------------------------------------------------
+    */
+
+    public function chat(Request $request)
+    {
+
+        try {
+
+            $message  = $request->input('message', '');
+
+            $code     = $request->input('code', '');
+
+            $language = $request->input('language', 'code');
+
+            $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->withToken(env('OPENAI_API_KEY'))
+                ->post(
+
+                    'https://api.openai.com/v1/responses',
+
+                    [
+
+                        "model" => "gpt-4.1-mini",
+
+                        "input" =>
+
+                            "You are an expert programming assistant inside a code editor called Stackly.
+Answer questions about the user's code. Be concise and direct.
+When suggesting fixes, always show the corrected code.
+Do NOT add markdown.
+
+Language: ".$language."
+
+Code:
+".$code."
+
+Question: ".$message
+
+                    ]
+
+                );
+
+            if (!$response->successful()) {
+
+                return response()->json([
+
+                    'result' => 'OpenAI API Error'
+
+                ], 500);
+            }
+
+            $data = $response->json();
+
+            $result =
+
+                $data['output'][0]['content'][0]['text']
+                ?? 'No response';
+
+            return response()->json([
+
+                'result' => trim($result)
+
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+
+                'result' => 'ERROR: '.$e->getMessage()
+
+            ], 500);
+        }
+    }
+
 }

@@ -195,6 +195,17 @@ Route::middleware(['auth', 'throttle:30,1'])->group(function () {
 
     )->name('explain');
 
+
+    /*
+    | AI Chat
+    | محادثة مع الـ AI عن الكود الحالي
+    */
+    Route::post('/chat',
+
+        [AiController::class, 'chat']
+
+    )->name('chat');
+
 });
 
 

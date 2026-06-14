@@ -364,6 +364,16 @@ pre.has { color:var(--t1); background:var(--raised); border:1px solid var(--bord
 #toast.success i { color:var(--green); }
 #toast.info    i { color:var(--accent); }
 #toast.error   i { color:var(--red); }
+
+/* ── AI PANEL RESIZE ─────────────────────────────────────── */
+/* Horizontal drag handle — left edge of the AI panel        */
+#aidiv { width:4px; cursor:col-resize; flex-shrink:0; background:var(--border); }
+#aidiv:hover, #aidiv.drag { background:var(--accent2); }
+
+/* Vertical drag handle — between AI response/chat area and terminal */
+#ai-vdiv { height:4px; cursor:row-resize; flex-shrink:0; background:var(--border); width:100%; }
+#ai-vdiv:hover, #ai-vdiv.drag { background:var(--accent2); }
+
 * { scrollbar-width:thin; scrollbar-color:var(--hover) transparent; }
 a { text-decoration:none; }
 </style>
@@ -496,6 +506,9 @@ a { text-decoration:none; }
 
   <div id="mdiv"></div>
 
+  <!-- Horizontal drag handle — resize the AI panel width by dragging this bar -->
+  <div id="aidiv"></div>
+
   <!-- AI PANEL: tabbed — Response | Chat -->
   <div class="ai-panel">
 
@@ -543,6 +556,9 @@ a { text-decoration:none; }
         </button>
       </div>
     </div>
+
+    <!-- Vertical drag handle — resize between AI response/chat and terminal -->
+    <div id="ai-vdiv"></div>
 
     <!-- TERMINAL (shared between both tabs) -->
     <div class="term-section">
@@ -1450,6 +1466,61 @@ function copyShrLink() {
   navigator.clipboard.writeText(document.getElementById('shrLink').textContent)
     .then(() => toast('Link copied!','success')).catch(() => toast('Copy failed','error'));
 }
+
+
+/* ── AI PANEL HORIZONTAL RESIZE ─────────────────────────── */
+/* Drag the left edge of the AI panel to resize it wider/narrower */
+let aiDrag = false;
+document.getElementById('aidiv').addEventListener('mousedown', () => {
+  aiDrag = true;
+  document.getElementById('aidiv').classList.add('drag');
+});
+document.addEventListener('mousemove', e => {
+  if (!aiDrag) return;
+  const rect = document.querySelector('.app').getBoundingClientRect();
+  const newW = Math.max(260, Math.min(620, rect.right - e.clientX));
+  document.querySelector('.ai-panel').style.width = newW + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (!aiDrag) return;
+  aiDrag = false;
+  document.getElementById('aidiv').classList.remove('drag');
+});
+
+
+/* ── AI PANEL VERTICAL RESIZE ────────────────────────────── */
+/* Drag the bar between the AI response/chat area and the terminal */
+let aiVDrag = false;
+document.getElementById('ai-vdiv').addEventListener('mousedown', () => {
+  aiVDrag = true;
+  document.getElementById('ai-vdiv').classList.add('drag');
+});
+document.addEventListener('mousemove', e => {
+  if (!aiVDrag) return;
+  const panel = document.querySelector('.ai-panel');
+  const rect  = panel.getBoundingClientRect();
+  const topH  = Math.max(80, Math.min(rect.height - 100, e.clientY - rect.top));
+  const botH  = rect.height - topH - 4; // 4px = divider height
+  // resize whichever AI section is currently visible
+  const resp  = document.getElementById('aiRespPanel');
+  const chat  = document.getElementById('aiChatPanel');
+  const term  = document.querySelector('.term-section');
+  if (resp.style.display !== 'none') {
+    resp.style.flex   = 'none';
+    resp.style.height = topH + 'px';
+  } else {
+    chat.style.flex   = 'none';
+    chat.style.height = topH + 'px';
+  }
+  term.style.flex      = 'none';
+  term.style.height    = botH + 'px';
+  term.style.minHeight = '0';
+});
+document.addEventListener('mouseup', () => {
+  if (!aiVDrag) return;
+  aiVDrag = false;
+  document.getElementById('ai-vdiv').classList.remove('drag');
+});
 
 </script>
 </body>
